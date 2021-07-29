@@ -71,23 +71,37 @@ export const getPageInfo = async (page: Page): Promise<FbPageInfo> => {
 
         const likesNumber = text
             .replace(pageTitle, '')
-            .replace(/^[^\d]+/, '') // like count starts after the page name
+            .replace(/^[^\d]+/g, '') // like count starts after the page name
             .match(/([\s,.0-9]+)\s?([mk]{0,1})/i); // number format varies depending on language, like 1,200, 1 200, 1.200, 1.2K, 2M
 
         if (likesNumber?.[1]) {
             const trimmed = likesNumber[1].trim();
             const parsedNumber = trimmed.length < 5 ? trimmed.replace(/,/g, '.') : trimmed; // 1,2 -> 1.2, 1.2 -> 1.2, 1200 -> 1200
-            let value = +(parsedNumber.replace(/[^.0-9]/g, '')) || 0;
+            let value = +(parsedNumber.replace(/[^.0-9]/g, ''));
+            let hasComma = false;
+
+            if (Number.isNaN(value)) {
+                value = +(parsedNumber.replace(/[^0-9]/g, ''));
+            }
+
+            if (Number.isNaN(value)) {
+                value = 0;
+            } else {
+                hasComma = true;
+            }
+
             let multipler = 1;
 
-            if (likesNumber?.[2]) {
-                if (/^m$/i.test(likesNumber[2])) {
-                    multipler = 1000000;
-                } else if (/^k$/i.test(likesNumber[2])) {
-                    multipler = 1000;
+            if (!hasComma) {
+                if (likesNumber?.[2]) {
+                    if (/^m$/i.test(likesNumber[2])) {
+                        multipler = 1000000;
+                    } else if (/^k$/i.test(likesNumber[2])) {
+                        multipler = 1000;
+                    }
+                } else if (!Number.isInteger(value)) {
+                    value = +(`${value}`.replace(/[^0-9]/g, ''));
                 }
-            } else if (!Number.isInteger(value)) {
-                value = +(`${value}`.replace(/[^0-9]/g, ''));
             }
 
             return value * multipler;
