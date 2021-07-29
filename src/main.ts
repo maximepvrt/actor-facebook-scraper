@@ -357,6 +357,11 @@ Apify.main(async () => {
                     deviceScaleFactor: useMobile ? 2 : 1,
                 };
             }],
+            postPageCloseHooks: [async (pageId, browserController) => {
+                if (browserController?.launchContext?.session?.isUsable() === false) {
+                    await browserController.close();
+                }
+            }],
         },
         persistCookiesPerSession: sessionStorage !== '',
         handlePageTimeoutSecs, // more comments, less concurrency
@@ -791,14 +796,12 @@ Apify.main(async () => {
             log.debug(`Done with page ${request.url}`);
         },
         handleFailedRequestFunction: async ({ request, error }) => {
-            if (error instanceof InfoError) {
-                // this only happens when maxRetries is
-                // comprised mainly of InfoError, which is usually a problem
-                // with pages
-                log.exception(error, 'The request failed after all retries, last error was:', error.toJSON());
-            } else {
-                log.error(`Requests failed on ${request.url} after ${request.retryCount} retries`);
-            }
+            // this only happens when maxRetries is
+            // comprised mainly of InfoError, which is usually a problem
+            // with pages
+            log.exception(error, `The request failed after all ${request.retryCount} retries, last error was:`, error instanceof InfoError
+                ? error.toJSON()
+                : {});
         },
     });
 
