@@ -101,7 +101,7 @@ Apify.main(async () => {
 
 
     const shaderError = () => {
-        if (Apify.isAtHome() && !proxyConfig?.groups?.includes('SHADER')) {
+        if (Apify.isAtHome() && proxyConfig?.groups?.includes('SHADER')) {
             throw new Error(`Scraping Facebook with SHADER proxy group is not allowed! Please use RESIDENTIAL proxy group. Contact our support team through the Intercom widget that should appear on the bottom right corner of your screen for help.`);
         }
     };
