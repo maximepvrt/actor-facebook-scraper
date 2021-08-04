@@ -220,7 +220,8 @@ async ({ page, LABELS, label, request, username, map, fns, customData, Apify }) 
 ​
 ## Limitations
 ​
-* Personal profiles and groups aren't accessible
+* This actor does not scrape personal data from profiles. We do not consider scraping vast amounts of personal data ethical and discourage anyone from doing so.
+* No login support
 * "About" can't be accessed publicly
 * Some pages with a new layout won't load posts and are not supported
 * The "Likes" count is a best effort. The mobile page doesn't provide the count, and some languages don't provide any at all. So if a page has, e.g. over 1.9M likes, the number will most likely be 1,900,000 instead of an exact number.
@@ -236,10 +237,6 @@ This project adheres to semver.
 * Major versions means a change in the output or input format, and a change in behavior.
 * Minor versions mean new features
 * Patch versions mean bug fixes/optimizations (changes to `README.md` aren't tagged)
-​
-## Upcoming features
-​
-* Public groups
 ​
 ## License
 ​
