@@ -96,10 +96,10 @@ Apify.main(async () => {
     const residentialWarning = () => {
         if (Apify.isAtHome() && !proxyConfig?.groups?.includes('RESIDENTIAL')) {
             log.warning(`!!!!!!!!!!!!!!!!!!!!!!!\n\nYou're not using RESIDENTIAL proxy group, it won't work as expected. Contact support@apify.com or on Intercom to give you proxy trial\n\n!!!!!!!!!!!!!!!!!!!!!!!`);
-        }     
+        }
     };
-    
-    
+
+
     const shaderError = () => {
         if (Apify.isAtHome() && !proxyConfig?.groups?.includes('SHADER')) {
             throw new Error(`Scraping Facebook with SHADER proxy group is not allowed! Please use RESIDENTIAL proxy group. Contact our support team through the Intercom widget that should appear on the bottom right corner of your screen for help.`);
@@ -450,7 +450,7 @@ Apify.main(async () => {
 
             try {
                 if (page.url().includes('?next=')) {
-                    throw new InfoError(`Content needs login to work, this will be retried but most likely won't work as expected`, {
+                    throw new InfoError(`Content redirected to login page, retrying...`, {
                         url: request.url,
                         namespace: 'login',
                         userData,
