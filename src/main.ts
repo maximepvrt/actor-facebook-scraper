@@ -333,6 +333,7 @@ Apify.main(async () => {
         launchContext: {
             launchOptions: {
                 devtools: debugLog,
+                headless: false,
             },
         },
         browserPoolOptions: {
@@ -367,7 +368,12 @@ Apify.main(async () => {
             }],
             postPageCloseHooks: [async (pageId, browserController) => {
                 if (browserController?.launchContext?.session?.isUsable() === false) {
-                    await browserController.close();
+                    log.debug('Closing browser, session is not usable');
+                    try {
+                        await browserController.close();
+                    } catch (e) {
+                        // ignore errors when it fails to close
+                    }
                 }
             }],
         },
@@ -433,7 +439,9 @@ Apify.main(async () => {
             if (!page.isClosed()) {
                 // TODO: work around mixed context bug
                 if (page.url().includes(MOBILE_HOST) && !request.userData.useMobile) {
-                    await browserController.close(page);
+                    try {
+                        await browserController.close();
+                    } catch (e) {}
                     throw new InfoError(`Mismatched mobile / desktop`, {
                         namespace: 'internal',
                         url: request.url,
@@ -765,7 +773,7 @@ Apify.main(async () => {
                     });
 
                     if (max && minComments && (postContent?.postComments?.comments?.length ?? 0) < minComments) {
-                        throw new InfoError(`Minimum post count ${minComments} not met, retrying`, {
+                        throw new InfoError(`Minimum comment count ${minComments} not met, retrying`, {
                             namespace: 'threshold',
                             url: page.url(),
                         });

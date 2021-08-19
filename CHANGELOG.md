@@ -1,3 +1,9 @@
+# 5.1.2
+
+Fixes:
+* Reaction count and breakdown per post
+* Update SDK and fix crashing when retiring browser
+
 # 5.0.0
 
 Features:

@@ -693,15 +693,15 @@ export const isNotFoundPage = async (page: Page) => {
  */
 export const getPostInfoFromScript = async (page: Page, request: Apify.Request): Promise<FbPost['postStats']> => {
     // fetch "timeslice" scripts, don't want related posts
-    const html = await page.$$eval('script:not([nonce],[type])', async (script, postId) => {
-        return script.filter((s) => {
+    const html = await page.$$eval('script[nonce]:not([type])', async (scripts, postId) => {
+        return scripts.filter((s) => {
             return s.innerHTML.includes(postId);
         }).map((s) => s.innerHTML).join('\n');
     }, request.userData.postId);
 
-    const commentsMatch = html.matchAll(/comment_count:{total_count:(\d+)/g);
-    const reactionsMatch = html.matchAll(/reaction_count:{count:(\d+)/g);
-    const shareMatch = html.matchAll(/share_count:{count:(\d+)/g);
+    const commentsMatch = html.matchAll(/comment_count:\{total_count:(\d+)/g);
+    const reactionsMatch = html.matchAll(/reaction_count:\{count:(\d+)/g);
+    const shareMatch = html.matchAll(/share_count:\{count:(\d+)/g);
 
     const maxFromMatches = (matches: IterableIterator<RegExpMatchArray>) => [...matches]
         .reduce((count, [, value]) => (+value > count ? +value : count), 0);
