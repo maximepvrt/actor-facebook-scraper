@@ -277,21 +277,23 @@ export const getPostUrls = async (page: Page, {
 
                     urls.add(parsed.toString());
 
-                    await requestQueue.addRequest({
-                        url: parsed.toString(),
-                        uniqueKey: `post-${top_level_post_id || story_fbid}`,
-                        userData: {
-                            override: request.userData.override,
-                            postId: top_level_post_id || story_fbid,
-                            label: LABELS.POST,
-                            useMobile: false,
-                            username,
-                            canonical: `${DESKTOP_ADDRESS}/${username}/${top_level_post_id || story_fbid
-                                ? `posts/${top_level_post_id || story_fbid}`
-                                : parsed.pathname.split(/\/(photos|videos)\//).slice(1).join('/')
-                            }`,
-                        },
-                    });
+                    if (!parsed.pathname.includes('/groups/') && !parsed.pathname.includes('/profile.php')) {
+                        await requestQueue.addRequest({
+                            url: parsed.toString(),
+                            uniqueKey: `post-${top_level_post_id || story_fbid}`,
+                            userData: {
+                                override: request.userData.override,
+                                postId: top_level_post_id || story_fbid,
+                                label: LABELS.POST,
+                                useMobile: false,
+                                username,
+                                canonical: `${DESKTOP_ADDRESS}/${username}/${top_level_post_id || story_fbid
+                                    ? `posts/${top_level_post_id || story_fbid}`
+                                    : parsed.pathname.split(/\/(photos|videos)\//).slice(1).join('/')
+                                }`,
+                            },
+                        });
+                    }
                 }
             }
         } catch (e) {
@@ -310,16 +312,26 @@ export const getPostUrls = async (page: Page, {
     };
 
     let isReady = false;
+    let rateLimitCount = 0;
 
     const interceptAjax = async (res: HTTPResponse) => {
         try {
             if (res.headers()?.['content-type']?.includes('json') && isError(await res.json() as any)) {
-                throw new InfoError('Rate limited', {
-                    namespace: 'getPostUrls',
-                    url: res.url(),
-                });
+                rateLimitCount++;
+
+                if (rateLimitCount > 20) {
+                    throw new InfoError('Rate limited', {
+                        namespace: 'getPostUrls',
+                        url: res.url(),
+                    });
+                }
+
+                await sleep(rateLimitCount * 30);
+
+                return;
             }
 
+            rateLimitCount = 0;
             const status = res.status();
 
             if (status !== 200 && status !== 302) {
@@ -815,6 +827,8 @@ export const getPostComments = async (
 
     log.debug('Starting loading comments', { url: currentUrl, mode, max });
 
+    let rateLimitCount = 0;
+
     const interceptGrapQL = async (res: HTTPResponse) => {
         try {
             if (page.isClosed() || finish.resolved) {
@@ -834,6 +848,8 @@ export const getPostComments = async (
                     const errored = isError(json);
 
                     if (!errored) {
+                        rateLimitCount = 0;
+
                         const data = get(json, ['data', 'feedback', 'display_comments']);
 
                         if (data) {
@@ -886,11 +902,19 @@ export const getPostComments = async (
                             }
                         }
                     } else {
-                        throw new InfoError('Rate limited', {
-                            userData: json,
-                            url: currentUrl,
-                            namespace: 'getPostComments',
-                        });
+                        rateLimitCount++;
+
+                        if (rateLimitCount > 20) {
+                            throw new InfoError('Rate limited', {
+                                userData: json,
+                                url: currentUrl,
+                                namespace: 'getPostComments',
+                            });
+                        }
+
+                        await sleep(rateLimitCount * 30);
+
+                        return;
                     }
                 }
             }

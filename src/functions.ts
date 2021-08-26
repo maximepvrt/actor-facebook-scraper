@@ -654,6 +654,20 @@ export const getUrlLabel = (url: string): FbLabel => {
 
     // works with m.facebook.com, lang-country.facebook.com, www.latest.facebook.com
     if (parsedUrl.hostname.includes('facebook.com')) {
+        if (parsedUrl.pathname.includes('/groups/')) {
+            throw new InfoError(`Group urls are not supported`, {
+                url,
+                namespace: 'getUrlLabel',
+            });
+        }
+
+        if (parsedUrl.pathname.includes('/profile.php')) {
+            throw new InfoError(`Profile urls are not supported`, {
+                url,
+                namespace: 'getUrlLabel',
+            });
+        }
+
         if (parsedUrl.pathname.startsWith('/biz/')) {
             return LABELS.LISTING;
         }
